@@ -1,0 +1,189 @@
+---
+title: Installation
+description: Install Kamotake and its dependencies on Linux systems
+---
+
+# Installing Kamotake
+
+<Note>
+Kamotake is currently tested on Linux systems. Ruby 3.2.2 or higher is required.
+</Note>
+
+## System Requirements
+
+Before installing Kamotake, ensure you have:
+
+- **Ruby**: Version 3.2.2 or higher
+- **Git**: For cloning the repository
+- **Make**: For building dependencies
+- **Bundler**: Ruby dependency manager (usually included with Ruby)
+
+### Check Ruby Version
+
+```bash
+ruby --version
+```
+
+If your Ruby version is older than 3.2.2, consider using a version manager like RVM or rbenv.
+
+## Installation Steps
+
+<Steps>
+  <Step title="Clone the Repository">
+    Clone the Kamotake repository with all submodules:
+    
+    ```bash
+    git clone --recursive https://github.com/chrischriscris/kamotaketsunominokamo.git
+    ```
+    
+    <Warning>
+    The `--recursive` flag is important! It ensures the Glucose SAT solver submodule is cloned correctly.
+    </Warning>
+  </Step>
+
+  <Step title="Navigate to the Repository">
+    Change into the repository directory:
+    
+    ```bash
+    cd kamotaketsunominokamo
+    ```
+  </Step>
+
+  <Step title="Run the Installation Script">
+    Source the installation script to install dependencies and add Kamotake to your PATH:
+    
+    ```bash
+    source install.sh
+    ```
+    
+    Or alternatively:
+    
+    ```bash
+    . install.sh
+    ```
+    
+    The script will:
+    - Build the Glucose SAT solver using `make`
+    - Install Ruby gem dependencies with `bundle install`
+    - Add Kamotake executables to your PATH for the current session
+    
+    <Info>
+    The PATH modification only affects your current terminal session. To make it permanent, add the Kamotake bin directories to your shell configuration file (`.bashrc`, `.zshrc`, etc.).
+    </Info>
+  </Step>
+
+  <Step title="Verify Installation">
+    Confirm Kamotake is installed correctly:
+    
+    ```bash
+    kamotake
+    ```
+    
+    You should see the usage message:
+    
+    ```
+    kamotake: No arguments provided
+    Usage: kamotake FILE [-d] [-c]
+    ```
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Spaces in Directory Path
+
+If installation fails, the directory path may contain spaces. One of the installation submodules doesn't handle spaces correctly.
+
+<Warning>
+**Solution**: Clone the repository to a path without spaces in the directory name.
+</Warning>
+
+```bash
+# Bad - has spaces
+cd ~/My Documents/Projects
+git clone --recursive https://github.com/chrischriscris/kamotaketsunominokamo.git
+
+# Good - no spaces
+cd ~/projects
+git clone --recursive https://github.com/chrischriscris/kamotaketsunominokamo.git
+```
+
+### Permission Errors During Bundle Install
+
+You may encounter permission errors if Ruby tries to install gems to system directories.
+
+**Solution**: Use a Ruby version manager like RVM or rbenv to install Ruby in your home directory.
+
+#### Installing with RVM
+
+```bash
+# Install RVM
+curl -sSL https://get.rvm.io | bash -s stable
+
+# Load RVM
+source ~/.rvm/scripts/rvm
+
+# Install Ruby 3.2.2
+rvm install 3.2.2
+rvm use 3.2.2 --default
+
+# Now proceed with Kamotake installation
+```
+
+#### Installing with rbenv
+
+```bash
+# Install rbenv (example for Ubuntu/Debian)
+curl -fsSL https://github.com/rbenv/rbenv-installer/raw/main/bin/rbenv-installer | bash
+
+# Add rbenv to your PATH
+echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+source ~/.bashrc
+
+# Install Ruby 3.2.2
+rbenv install 3.2.2
+rbenv global 3.2.2
+
+# Now proceed with Kamotake installation
+```
+
+### Missing Make Command
+
+If `make` is not found, install build tools:
+
+```bash
+# Ubuntu/Debian
+sudo apt-get install build-essential
+
+# Fedora/RHEL
+sudo dnf groupinstall "Development Tools"
+
+# Arch Linux
+sudo pacman -S base-devel
+```
+
+### Submodule Not Cloned
+
+If you forgot the `--recursive` flag during cloning:
+
+```bash
+cd kamotaketsunominokamo
+git submodule update --init --recursive
+```
+
+## Web Interface Setup (Optional)
+
+To use the web interface, the installation script automatically sets it up. To run the web server:
+
+```bash
+./run-kamotake-server.sh
+```
+
+Then access the interface at `http://localhost:12345`
+
+## Next Steps
+
+<Card title="Quickstart Guide" icon="rocket" href="/quickstart">
+  Learn how to solve your first nonogram puzzle with Kamotake
+</Card>

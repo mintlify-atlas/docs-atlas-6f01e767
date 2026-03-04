@@ -1,0 +1,204 @@
+---
+title: 'SAT Encoding'
+description: 'Deep dive into the CNF encoding algorithm'
+---
+
+## Overview
+
+Kamotake encodes nonogram constraints as CNF (Conjunctive Normal Form) clauses using Tseitin transformation. This page explains the encoding algorithm in detail.
+
+## Variable Assignment
+
+For an N×M nonogram grid, variables are assigned as follows:
+
+```ruby
+# From nonogram.rb:52
+@n_vars = @n_rows * @n_cols
+```
+
+- Variables 1 to N×M represent grid cells
+- Cell (i, j) maps to variable `i * n_cols + j + 1`
+- Positive literal = filled cell, negative literal = empty cell
+
+### Tseitin Variables
+
+Additional auxiliary variables are introduced for encoding:
+
+```ruby
+# From nonogram.rb:54-55
+@ps = @n_rows * @n_cols
+```
+
+The `@ps` counter tracks auxiliary variables used in Tseitin transformation. These variables represent "this particular arrangement is chosen" for each valid possibility.
+
+## Generating Possibilities
+
+The `generate_possibilities` method computes all valid arrangements for a constraint:
+
+```ruby
+# From nonogram.rb:188-214
+def generate_possibilities(groups, is_row)
+  if groups == [0]
+    return [[-1] * (is_row ? @n_cols : @n_rows)]
+  end
+  
+  n_groups = groups.size
+  n_empty = (is_row ? @n_cols : @n_rows) - groups.sum - (n_groups - 1)
+  
+  # Generate all ways of taking n_groups elements from a set of n_blocks
+  n_blocks = n_groups + n_empty
+  combinations = (0...n_blocks).to_a.combination(n_groups).to_a
+  
+  # Generate the blocks to be placed in the empty spaces
+  blocks = groups.map { |n| [1] * n + [-1] }
+  
+  possibilities = []
+  combinations.each do |combination|
+    possibility = [-1] * (n_blocks)
+    combination.each_with_index do |i, j|
+      possibility[i] = blocks[j]
+    end
+    
+    possibilities << possibility.flatten[0...-1]
+  end
+  
+  possibilities
+end
+```
+
+### Example
+
+For a constraint `[2, 1]` with 5 cells:
+
+1. **Calculate empty spaces**: `5 - (2 + 1) - (2 - 1) = 1`
+2. **Create blocks**: `[[1, 1, -1], [1, -1]]`
+3. **Generate combinations**: All ways to place 2 groups among 3 positions
+4. **Results**:
+   - `[1, 1, -1, 1, -1]` → ◼◼ ◼
+   - `[1, 1, -1, -1, 1]` → ◼◼  ◼
+   - `[-1, 1, 1, -1, 1]` →  ◼◼ ◼
+
+## Writing CNF Clauses
+
+The `write_clauses!` method encodes possibilities using Tseitin transformation:
+
+```ruby
+# From nonogram.rb:222-252
+def write_clauses!(file, cells, groups, is_row)
+  possibilities = generate_possibilities(groups, is_row)
+  n_possibilities = possibilities.size
+  
+  # Increase the number of variables and clauses
+  @n_vars += n_possibilities
+  @n_clauses += 1 + n_possibilities * (cells.size + 1)
+  
+  # At least one possibility must be true
+  for i in @ps + 1..@ps + n_possibilities
+    file.print "#{i} "
+  end
+  file.puts "0"
+  
+  possibilities.each do |possibility|
+    # Generate a Tseitin variable
+    @ps += 1
+    aux = "#{@ps} "
+    
+    # Writes the ==> clauses: (-p_i) v (l_1 ^ ... ^ l_n)
+    possibility.each_with_index do |value, i|
+      l_i = cells[i] * value
+      file.puts "#{-@ps} #{l_i} 0"
+      aux << "#{-l_i} "
+    end
+    aux << "0"
+    
+    # Writes the <== clauses: (p_i v -l_1 v ... v -l_n)
+    file.puts aux
+  end
+end
+```
+
+### Tseitin Transformation
+
+For each valid arrangement possibility, we introduce an auxiliary variable `p_i` and encode:
+
+**p_i ⟺ (l_1 ∧ l_2 ∧ ... ∧ l_n)**
+
+This equivalence is split into two implications:
+
+#### 1. Forward Implication (p_i ⟹ l_1 ∧ l_2 ∧ ... ∧ l_n)
+
+Encoded as n clauses:
+```
+(-p_i ∨ l_1) ∧ (-p_i ∨ l_2) ∧ ... ∧ (-p_i ∨ l_n)
+```
+
+```ruby
+# From nonogram.rb:242-244
+possibility.each_with_index do |value, i|
+  l_i = cells[i] * value
+  file.puts "#{-@ps} #{l_i} 0"
+end
+```
+
+#### 2. Backward Implication (l_1 ∧ l_2 ∧ ... ∧ l_n ⟹ p_i)
+
+Encoded as one clause:
+```
+(p_i ∨ -l_1 ∨ -l_2 ∨ ... ∨ -l_n)
+```
+
+```ruby
+# From nonogram.rb:249
+file.puts aux  # aux contains "p_i -l_1 -l_2 ... -l_n 0"
+```
+
+#### 3. At Least One Possibility
+
+Finally, we assert that at least one possibility must be chosen:
+
+```
+(p_1 ∨ p_2 ∨ ... ∨ p_k)
+```
+
+```ruby
+# From nonogram.rb:231-234
+for i in @ps + 1..@ps + n_possibilities
+  file.print "#{i} "
+end
+file.puts "0"
+```
+
+## DIMACS Format
+
+Clauses are written in DIMACS CNF format:
+
+```
+p cnf <num_vars> <num_clauses>
+<clause_1>
+<clause_2>
+...
+```
+
+Example output for a simple constraint:
+```
+1 2 3 0          # At least one possibility
+-1 4 0           # If p_1 then cell_4 filled
+-1 5 0           # If p_1 then cell_5 filled
+1 -4 -5 0        # If cells match then p_1
+-2 -4 0          # If p_2 then cell_4 empty
+-2 6 0           # If p_2 then cell_6 filled
+2 4 -6 0         # If cells match then p_2
+```
+
+## Efficiency
+
+The encoding generates:
+- **Variables**: N×M (grid cells) + total number of valid arrangements
+- **Clauses**: For each row/column with k possibilities and n cells:
+  - 1 clause (at least one possibility)
+  - k × (n + 1) clauses (Tseitin encoding)
+
+This quadratic growth is manageable because:
+1. Modern SAT solvers like Glucose handle millions of clauses efficiently
+2. The encoding is highly structured, enabling conflict-driven learning
+3. Most cells have few valid arrangements, keeping k small

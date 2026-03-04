@@ -1,0 +1,90 @@
+---
+title: Introduction
+description: Learn about Kamotake, a powerful SAT-based nonogram solver with CLI and web interface
+---
+
+# What is Kamotake?
+
+Kamotake (カモタカツノミノカモ) is a SAT-based nonogram solver that transforms logic puzzles into Boolean satisfiability problems. It provides both a command-line interface for quick solving and a web interface for interactive puzzle solving.
+
+## What are Nonograms?
+
+Nonograms, also known as picross or griddlers, are logic puzzles where you fill in cells on a grid according to numerical constraints. Each number indicates a consecutive group of filled cells in that row or column.
+
+For example, a row with constraints `[3, 1]` means:
+- A group of 3 consecutive filled cells
+- At least one empty cell
+- A group of 1 filled cell
+
+Solving these puzzles reveals a hidden picture.
+
+## How Kamotake Works
+
+Kamotake uses a sophisticated approach to solve nonograms:
+
+1. **SAT Translation**: Converts nonogram constraints into CNF (Conjunctive Normal Form) clauses
+2. **Tseitin Transformation**: Uses auxiliary variables to efficiently encode constraints
+3. **Glucose SAT Solver**: Leverages a modern SAT solver for optimal performance
+4. **Solution Extraction**: Translates the SAT solution back into the solved grid
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="CLI Interface" icon="terminal">
+    Fast command-line solving with customizable output formats and debug options
+  </Card>
+  
+  <Card title="Web Interface" icon="browser">
+    Interactive web-based solver accessible at `localhost:12345`
+  </Card>
+  
+  <Card title="SAT-Based Solving" icon="puzzle-piece">
+    Efficient constraint satisfaction using the Glucose SAT solver
+  </Card>
+  
+  <Card title="Visual Output" icon="image">
+    Beautiful emoji-based grid display with compact and detailed modes
+  </Card>
+</CardGroup>
+
+## Output Modes
+
+Kamotake offers two visualization modes:
+
+### Standard Mode
+Displays the full puzzle with row and column constraints alongside the solution:
+
+```
+####  3  5  7  9 11
+   3  .  .  .  ◼️  ◼️
+   5  .  ◼️  ◼️  ◼️  ◼️
+   7  ◼️  ◼️  ◼️  ◼️  ◼️
+```
+
+### Compact Mode (`-c` flag)
+Shows only the solved puzzle for a cleaner view:
+
+```
+      ◼️◼️◼️◼️
+  ◼️◼️◼️◼️◼️◼️
+◼️◼️◼️◼️◼️◼️◼️◼️
+```
+
+## Use Cases
+
+- **Puzzle Solving**: Quickly solve nonogram puzzles of any size
+- **Algorithm Research**: Study SAT-based approaches to constraint satisfaction
+- **Educational Tool**: Learn about Boolean logic and CNF transformations
+- **Validation**: Verify manually solved puzzles or check puzzle uniqueness
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Set up Ruby and install Kamotake on your system
+  </Card>
+  
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Solve your first nonogram puzzle in minutes
+  </Card>
+</CardGroup>

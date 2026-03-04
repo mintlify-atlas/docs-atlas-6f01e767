@@ -1,0 +1,162 @@
+---
+title: 'Web Interface'
+description: 'Using Kamotake Web to solve nonograms through a browser interface'
+---
+
+## Overview
+
+Kamotake Web provides a user-friendly browser-based interface for solving nonogram puzzles. Instead of using the command line, you can upload puzzle files and view solutions directly in your web browser.
+
+## Starting the Web Server
+
+To launch the Kamotake web interface, run the following command from the root directory of the repository:
+
+```bash
+./run-kamotake-server.sh
+```
+
+This script starts a Rails server on port 12345.
+
+<Note>
+  Make sure you're in the root directory of the Kamotake repository when running this command.
+</Note>
+
+### Server Configuration
+
+The web server runs on:
+- **Host**: localhost
+- **Port**: 12345
+- **URL**: `http://localhost:12345`
+
+## Accessing the Interface
+
+Once the server is running, open your web browser and navigate to:
+
+```
+http://localhost:12345
+```
+
+You should see the Kamotake Web interface.
+
+## Using Kamotake Web
+
+The web interface provides an intuitive workflow for solving nonogram puzzles:
+
+### Step 1: Request a Nonogram
+
+Click the **"Nonogram (Chef's Recommendation)"** button to begin.
+
+<Note>
+  Kamotake Web uses a restaurant/food ordering theme for its interface, making the solver experience more fun and engaging.
+</Note>
+
+### Step 2: Upload Your Puzzle
+
+Upload an "ingredient" (input file) with the nonogram puzzle:
+
+1. Click the file upload button
+2. Select a text file in the [Kamotake input format](/usage/input-format)
+3. The file should contain the puzzle dimensions and constraints
+
+### Step 3: Submit for Solving
+
+Click the **"Order now!"** button to submit your puzzle for solving.
+
+The SAT-based solver will process your puzzle and generate a solution.
+
+### Step 4: View Results
+
+The solved nonogram will appear in the lower part of the page.
+
+You can:
+- View the complete solved puzzle
+- Upload another puzzle to solve
+- Download or save the results
+
+## Workflow Summary
+
+<Steps>
+  <Step title="Start Server">
+    Run `./run-kamotake-server.sh` from the repository root
+  </Step>
+  <Step title="Open Browser">
+    Navigate to `http://localhost:12345`
+  </Step>
+  <Step title="Request Order">
+    Click "Nonogram (Chef's Recommendation)"
+  </Step>
+  <Step title="Upload File">
+    Select your nonogram puzzle file in the correct format
+  </Step>
+  <Step title="Submit">
+    Click "Order now!" to solve
+  </Step>
+  <Step title="View Solution">
+    See the solved puzzle displayed below
+  </Step>
+</Steps>
+
+## Input File Requirements
+
+The web interface accepts the same text file format as the CLI. Your uploaded file must:
+
+- Be a plain text file (`.txt` extension recommended)
+- Follow the Kamotake input format specification
+- Include dimensions on the first line
+- Provide row constraints
+- Provide column constraints
+
+See the [Input Format](/usage/input-format) page for detailed specifications and examples.
+
+## Advantages of the Web Interface
+
+<Accordion title="Visual Feedback">
+  The web interface provides a graphical representation of the solved puzzle, making it easier to visualize the solution compared to CLI output.
+</Accordion>
+
+<Accordion title="No Command Line Knowledge Required">
+  Users unfamiliar with terminal commands can easily use Kamotake through the browser interface.
+</Accordion>
+
+<Accordion title="File Management">
+  Upload files directly through the browser without needing to navigate file paths in the terminal.
+</Accordion>
+
+<Accordion title="Accessible from Any Browser">
+  Once the server is running, you can access it from any browser on your local machine.
+</Accordion>
+
+## Implementation Details
+
+The web server is implemented as a Rails application located in the `kamotake-web/` directory.
+
+The startup script (`run-kamotake-server.sh`) executes:
+```bash
+kamotake-web/bin/rails server -p 12345
+```
+
+This starts the Rails development server on port 12345, making the application accessible at localhost.
+
+## Troubleshooting
+
+<Accordion title="Server won't start">
+  Make sure:
+  - You're in the root directory of the repository
+  - Ruby 3.2.2 or higher is installed
+  - All dependencies are installed (run `source install.sh` if needed)
+  - Port 12345 is not already in use by another application
+</Accordion>
+
+<Accordion title="Can't access localhost:12345">
+  - Verify the server is running in your terminal
+  - Check that your browser is accessing the correct URL: `http://localhost:12345`
+  - Try refreshing the page
+  - Check for firewall settings that might block localhost connections
+</Accordion>
+
+<Accordion title="Upload fails or no solution appears">
+  - Verify your input file follows the correct format (see [Input Format](/usage/input-format))
+  - Check the terminal where the server is running for error messages
+  - Ensure the file is a plain text file
+  - Try with one of the example files from the `data/` directory
+</Accordion>

@@ -1,0 +1,356 @@
+---
+title: 'API Reference'
+description: 'Complete API documentation for the Nonogram class'
+---
+
+## Nonogram Class
+
+The `Nonogram` class is the core of the Kamotake solver. It handles puzzle parsing, CNF encoding, SAT solving, and solution extraction.
+
+**Location**: `kamotake/lib/nonogram.rb`
+
+---
+
+## Constructor
+
+### initialize
+
+Parses a nonogram puzzle from a file.
+
+```ruby
+Nonogram.new(filename)
+```
+
+<ParamField path="filename" type="String" required>
+  Path to the puzzle file. File format:
+  - Line 1: `n_cols n_rows`
+  - Lines 2 to n_rows+1: Row constraints (space-separated integers)
+  - Lines n_rows+2 to end: Column constraints (space-separated integers)
+</ParamField>
+
+**Returns**: `Nonogram` instance
+
+**Raises**:
+- `RuntimeError` - Invalid file format or missing data
+- `ArgumentError` - Invalid number of rows or columns (≤ 0)
+
+**Example**:
+```ruby
+nonogram = Nonogram.new("puzzles/example.txt")
+```
+
+**Implementation Details** (nonogram.rb:11-56):
+- Parses dimensions from first line
+- Reads row and column constraints
+- Initializes CNF variables: `@n_vars = @n_rows * @n_cols`
+- Sets up Tseitin variable counter: `@ps = @n_rows * @n_cols`
+
+---
+
+## Public Methods
+
+### solve
+
+Solves the nonogram puzzle using SAT reduction.
+
+```ruby
+nonogram.solve
+```
+
+**Returns**: `nil` (solution stored in `@solution` attribute)
+
+**Side Effects**:
+- Creates temporary directory `.tmp_kamotake/`
+- Generates CNF file in DIMACS format
+- Invokes Glucose SAT solver
+- Extracts solution from solver output
+- Prints progress messages to stdout
+
+**Process** (nonogram.rb:58-108):
+1. Generates CNF encoding for all row and column constraints
+2. Writes DIMACS header: `p cnf #{@n_vars} #{@n_clauses}`
+3. Calls `solve_cnf` to invoke Glucose solver
+4. Extracts solution using `extract_solution`
+
+**Example**:
+```ruby
+nonogram = Nonogram.new("puzzles/heart.txt")
+nonogram.solve
+puts nonogram.solution.inspect  # [[true, false, true], ...]
+```
+
+---
+
+### to_s
+
+Returns a formatted string representation of the solved puzzle with constraints.
+
+```ruby
+nonogram.to_s
+```
+
+**Returns**: `String` - Formatted puzzle with:
+- Row constraints on the left
+- Column constraints on top
+- Solution grid with ◼️ for filled cells and `.` for empty cells
+
+**Example Output**:
+```
+#### 1  2
+#### 2  1
+   1 ◼️ .
+   2 ◼️ ◼️
+```
+
+**Implementation** (nonogram.rb:111-162):
+- Calculates padding based on largest constraint values
+- Creates matrix including constraint labels
+- Renders filled cells as ◼️ emoji
+- Returns "No solution found 🦐" if puzzle is unsolvable
+
+---
+
+### to_s_compact
+
+Returns a compact string representation showing only the solution grid.
+
+```ruby
+nonogram.to_s_compact
+```
+
+**Returns**: `String` - Compact grid with ◼️◼️ for filled cells and two spaces for empty cells
+
+**Example Output**:
+```
+◼️◼️  
+◼️◼️◼️◼️
+```
+
+**Implementation** (nonogram.rb:165-179):
+- Iterates through solution matrix
+- Renders each cell as double-width for square appearance
+- Returns "No solution found" if puzzle is unsolvable
+
+---
+
+## Attributes (Read-Only)
+
+### n_rows
+
+```ruby
+nonogram.n_rows
+```
+
+<ResponseField name="n_rows" type="Integer">
+  Number of rows in the puzzle grid
+</ResponseField>
+
+---
+
+### n_cols
+
+```ruby
+nonogram.n_cols
+```
+
+<ResponseField name="n_cols" type="Integer">
+  Number of columns in the puzzle grid
+</ResponseField>
+
+---
+
+### row_constraints
+
+```ruby
+nonogram.row_constraints
+```
+
+<ResponseField name="row_constraints" type="Array<Array<Integer>>">
+  Array of row constraints. Each element is an array of integers representing runs of consecutive filled cells.
+  
+  Example: `[[2, 1], [3], [1, 1]]` means:
+  - Row 0: 2 filled, gap, 1 filled
+  - Row 1: 3 filled
+  - Row 2: 1 filled, gap, 1 filled
+</ResponseField>
+
+---
+
+### col_constraints
+
+```ruby
+nonogram.col_constraints
+```
+
+<ResponseField name="col_constraints" type="Array<Array<Integer>>">
+  Array of column constraints. Format identical to `row_constraints`.
+</ResponseField>
+
+---
+
+### name
+
+```ruby
+nonogram.name
+```
+
+<ResponseField name="name" type="String">
+  Puzzle name derived from the input filename (without extension).
+  
+  Example: `Nonogram.new("puzzles/heart.txt").name == "heart"`
+</ResponseField>
+
+---
+
+### solution
+
+```ruby
+nonogram.solution
+```
+
+<ResponseField name="solution" type="Array<Array<Boolean>> | nil">
+  2D array representing the solved puzzle:
+  - `true` = filled cell (◼️)
+  - `false` = empty cell
+  - `[]` = unsatisfiable puzzle
+  - `nil` = not yet solved
+  
+  Populated after calling `solve`.
+</ResponseField>
+
+**Example**:
+```ruby
+nonogram.solution
+# => [[true, false], [true, true]]
+```
+
+---
+
+## Private Methods
+
+The following methods are internal implementation details:
+
+### generate_possibilities
+
+Generates all valid cell arrangements for a constraint.
+
+```ruby
+generate_possibilities(groups, is_row)
+```
+
+<ParamField path="groups" type="Array<Integer>">
+  Constraint array (e.g., `[2, 1]`)
+</ParamField>
+
+<ParamField path="is_row" type="Boolean">
+  `true` for row constraints, `false` for column constraints
+</ParamField>
+
+<ResponseField name="return" type="Array<Array<Integer>>">
+  Array of possibilities, where each possibility is an array of `1` (filled) and `-1` (empty)
+</ResponseField>
+
+**Reference**: nonogram.rb:188-214
+
+---
+
+### write_clauses!
+
+Writes CNF clauses for a row or column constraint to file.
+
+```ruby
+write_clauses!(file, cells, groups, is_row)
+```
+
+<ParamField path="file" type="File">
+  Output file for DIMACS CNF format
+</ParamField>
+
+<ParamField path="cells" type="Array<Integer>">
+  Variable numbers corresponding to the cells
+</ParamField>
+
+<ParamField path="groups" type="Array<Integer>">
+  Constraint array
+</ParamField>
+
+<ParamField path="is_row" type="Boolean">
+  `true` for rows, `false` for columns
+</ParamField>
+
+**Side Effects**:
+- Increments `@n_vars` and `@n_clauses`
+- Writes clauses using Tseitin transformation
+
+**Reference**: nonogram.rb:222-252
+
+---
+
+### extract_solution
+
+Parses SAT solver output and converts to solution matrix.
+
+```ruby
+extract_solution(solution_filename)
+```
+
+<ParamField path="solution_filename" type="String">
+  Path to file containing SAT solver output
+</ParamField>
+
+<ResponseField name="return" type="Array<Array<Boolean>>">
+  Solution matrix, or `[]` if UNSAT
+</ResponseField>
+
+**Reference**: nonogram.rb:258-285
+
+---
+
+## Utility Functions
+
+These functions are defined in `kamotake/lib/utils.rb`:
+
+### solve_cnf
+
+Invokes the Glucose SAT solver on a CNF file.
+
+```ruby
+solve_cnf(header_filename, cnf_filename, bin_path)
+```
+
+<ParamField path="header_filename" type="String">
+  Path to DIMACS header file containing `p cnf` line
+</ParamField>
+
+<ParamField path="cnf_filename" type="String">
+  Path to CNF clauses file
+</ParamField>
+
+<ParamField path="bin_path" type="String">
+  Path to SAT solver binary (e.g., `"glucose"`)
+</ParamField>
+
+<ResponseField name="return" type="String">
+  Path to solution file
+</ResponseField>
+
+**Implementation**: Spawns solver process, pipes CNF via stdin, waits for completion
+
+**Reference**: utils.rb:17-61
+
+---
+
+### measure_time
+
+Measures execution time of a block.
+
+```ruby
+time = measure_time { nonogram.solve }
+puts "Solved in #{time} seconds"
+```
+
+<ResponseField name="return" type="Float">
+  Execution time in seconds
+</ResponseField>
+
+**Reference**: utils.rb:5-9

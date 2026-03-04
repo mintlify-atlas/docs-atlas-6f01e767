@@ -1,0 +1,126 @@
+---
+title: 'How It Works'
+description: 'Understanding the SAT-based nonogram solving architecture'
+---
+
+## Overview
+
+Kamotake solves nonogram puzzles by reducing them to Boolean Satisfiability (SAT) problems. This reduction allows us to leverage highly optimized SAT solvers like Glucose to find solutions efficiently.
+
+## Architecture
+
+The solver follows a clear pipeline:
+
+```
+Nonogram Puzzle → CNF Encoding → Glucose SAT Solver → Solution Extraction
+```
+
+### 1. Puzzle Parsing
+
+The `Nonogram` class parses puzzle files containing:
+- Grid dimensions (rows × columns)
+- Row constraints (runs of consecutive filled cells)
+- Column constraints
+
+```ruby
+# From nonogram.rb:26
+@n_cols, @n_rows = parts.map(&:to_i)
+@row_constraints = Array.new(@n_rows) { [] }
+@col_constraints = Array.new(@n_cols) { [] }
+```
+
+Each cell in the grid is assigned a Boolean variable. For an N×M grid, variables 1 through N×M represent whether each cell is filled (true) or empty (false).
+
+### 2. CNF Translation
+
+The solver converts puzzle constraints into Conjunctive Normal Form (CNF):
+
+```ruby
+# From nonogram.rb:68-82
+@row_constraints.each_with_index do |row, i|
+  start = i * @n_cols + 1
+  _end = start + @n_cols
+  cells = (start..._end).to_a
+  
+  write_clauses!(file, cells, row, true)
+end
+
+@col_constraints.each_with_index do |col, i|
+  start = i + 1
+  _end = start + @n_cols * @n_rows
+  cells = (start..._end).step(@n_cols).to_a
+  
+  write_clauses!(file, cells, col, false)
+end
+```
+
+For each row and column, the solver:
+1. Generates all valid arrangements satisfying the constraint
+2. Encodes these possibilities as CNF clauses using Tseitin transformation
+3. Writes clauses ensuring at least one valid arrangement is chosen
+
+### 3. SAT Solver Integration
+
+The generated CNF is written in DIMACS format and passed to the Glucose SAT solver:
+
+```ruby
+# From utils.rb:23-27
+pid = spawn(
+  "cat #{header_filename} #{cnf_filename} |" \
+  "#{bin_path} /dev/stdin #{solution_filename}",
+  out: "/dev/null",
+)
+```
+
+The Glucose solver is built from source as specified in the Makefile:
+
+```makefile
+# From Makefile:3-6
+kamotake/bin/glucose: glucose/simp/Makefile
+	cd glucose/simp && make glucose
+	cp glucose/simp/glucose kamotake/bin/glucose
+```
+
+### 4. Solution Extraction
+
+Once Glucose finds a satisfying assignment, the solution is extracted:
+
+```ruby
+# From nonogram.rb:258-284
+def extract_solution(solution_filename)
+  File.open(solution_filename, "r") do |f|
+    solution_string = f.readline.strip
+    
+    if solution_string == "UNSAT"
+      return []
+    end
+    
+    # Convert variable assignments back to grid
+    solution_string.split(" ")
+      .take(dimension)
+      .map { |n| line << (n.to_i > 0) }
+  end
+end
+```
+
+Positive literals indicate filled cells, negative literals indicate empty cells.
+
+## Reduction to SAT
+
+The key insight is that each nonogram constraint can be expressed as a disjunction of possible valid arrangements:
+
+**For a row with constraint [2, 1] and 5 columns:**
+- Valid arrangements: `[◼◼ ◼]`, `[◼◼  ◼]`, `[ ◼◼ ◼]`
+- At least one arrangement must be true
+- If an arrangement is chosen, all its cells must match
+
+This "exactly one valid arrangement" constraint is efficiently encoded using auxiliary variables and Tseitin transformation, creating a compact CNF representation that SAT solvers can process effectively.
+
+## Performance
+
+The solver measures and reports:
+- CNF translation time (nonogram.rb:66)
+- SAT solving time (utils.rb:22)
+- Solution extraction time
+
+By leveraging Glucose's optimized conflict-driven clause learning (CDCL) algorithm, Kamotake can solve complex nonogram puzzles that would be intractable with naive backtracking approaches.

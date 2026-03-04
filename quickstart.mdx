@@ -1,80 +1,242 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Solve your first nonogram puzzle with Kamotake in minutes
 ---
 
-## Get started in three steps
+# Quickstart Guide
 
-Get your documentation site running locally and make your first customization.
+This guide will help you solve your first nonogram puzzle using Kamotake's CLI.
 
-### Step 1: Set up your local environment
+## Your First Puzzle
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+Let's create and solve a simple 5x1 nonogram puzzle.
+
+<Steps>
+  <Step title="Create a Puzzle File">
+    Create a file named `simple.txt` with the following content:
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
+    ```txt simple.txt
+    5 1
+    3
+    0
+    1
+    1
+    1
+    0
+    ```
     
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
+    **Format explanation:**
+    - Line 1: `5 1` = 5 columns, 1 row
+    - Line 2: `3` = row constraint (3 consecutive filled cells)
+    - Lines 3-7: Column constraints (0 means empty column, 1 means one filled cell)
     
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    This puzzle has one row with 3 consecutive filled cells.
+  </Step>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+  <Step title="Solve the Puzzle">
+    Run Kamotake with your puzzle file:
+    
+    ```bash
+    kamotake simple.txt
+    ```
+    
+    You'll see the solving process:
+    
+    ```
+    Wait while we're painting your nonogram in CNF 👘...
+    Picture completed in 0.023 seconds! 🎴 (DIMACS translation generated in .tmp_kamotake/simple.cnf)
+    Cleaning DIMACS and SAT solution files... 🚯 (You can keep them with the -d flag)
+    
+    #  3
+       .  ◼️  ◼️  ◼️  .
+    ```
+    
+    The solution shows the filled cells (◼️) forming a group of 3 in the middle.
+  </Step>
+</Steps>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+## Command-Line Flags
 
-### Step 3: Go live
+Kamotake supports several optional flags:
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+### Keep Debug Files (`-d`)
 
-## Next steps
+By default, Kamotake removes temporary CNF and solution files. Use `-d` to keep them:
 
-Now that you have your docs running, explore these key features:
+```bash
+kamotake simple.txt -d
+```
 
-<CardGroup cols={2}>
+This creates a `.tmp_kamotake/` directory with:
+- `simple.cnf` - The CNF clauses
+- `simple_header.cnf` - The DIMACS header with variable/clause count
+- `simple.sol` - The SAT solver output
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
+<Info>
+Debug files are useful for understanding the SAT encoding or debugging complex puzzles.
+</Info>
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
+### Compact Output (`-c`)
 
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
+For a cleaner, constraint-free view:
 
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
+```bash
+kamotake simple.txt -c
+```
 
-</CardGroup>
+Output:
+```
+  ◼️◼️◼️◼️◼️◼️
+```
+
+### Combining Flags
+
+You can use both flags together:
+
+```bash
+kamotake simple.txt -d -c
+```
+
+## More Complex Example
+
+Let's try a larger 5x5 puzzle. Create `heart.txt`:
+
+```txt heart.txt
+5 5
+3
+5
+3
+1
+1
+1 1
+2 1
+5
+2 1
+1 1
+```
+
+**Format breakdown:**
+- `5 5` = 5 columns, 5 rows
+- Next 5 lines = row constraints
+- Last 5 lines = column constraints
+
+Solve it:
+
+```bash
+kamotake heart.txt
+```
+
+Expected output:
+
+```
+########  1  1  2  2  1
+########  1  1  5  1  1
+      3  .  ◼️  ◼️  ◼️  .
+      5  ◼️  ◼️  ◼️  ◼️  ◼️
+      3  .  ◼️  ◼️  ◼️  .
+      1  .  .  ◼️  .  .
+      1  .  .  ◼️  .  .
+```
+
+## Using Example Puzzles
+
+Kamotake includes example puzzles in the repository's `data/` directory:
+
+```bash
+# Navigate to the repository
+cd kamotaketsunominokamo
+
+# Solve an example puzzle
+kamotake data/test0.txt -c
+```
+
+Available examples:
+- `test0.txt` - 25x30 puzzle
+- `test1.txt` - 53x53 complex puzzle
+- `test2.txt` - 5x1 simple puzzle
+- Additional puzzles: `test3.txt` through `test7.txt`
+
+## Understanding the Output
+
+### Standard Output Format
+
+```
+####  <column constraints>
+<row> <solution cells>
+```
+
+- `#` marks the constraint area
+- Numbers show the constraints for each row/column
+- `◼️` represents filled cells
+- `.` represents empty cells
+
+### Solution Process
+
+1. **CNF Translation**: Kamotake generates Boolean clauses representing all valid cell configurations
+2. **SAT Solving**: The Glucose solver finds a satisfying assignment
+3. **Extraction**: The solution is converted back to a grid
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+If a puzzle has no solution, Kamotake will report "No solution found 🦐"
 </Note>
+
+## Puzzle File Format Reference
+
+The input format is:
+
+```txt
+<columns> <rows>
+<row_1_constraints>
+<row_2_constraints>
+...
+<row_N_constraints>
+<col_1_constraints>
+<col_2_constraints>
+...
+<col_M_constraints>
+```
+
+**Rules:**
+- Each constraint line contains space-separated numbers
+- Each number represents a group of consecutive filled cells
+- Groups must have at least one empty cell between them
+- Use `0` for rows/columns with no filled cells
+
+### Example: 3x3 Grid
+
+```txt
+3 3
+1 1
+3
+1 1
+1 1
+3
+1 1
+```
+
+This creates:
+- 3 columns, 3 rows
+- Row 1: two groups of 1 cell each
+- Row 2: one group of 3 cells
+- Row 3: two groups of 1 cell each
+- Columns follow the same pattern
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="CLI Commands" icon="terminal" href="/usage/cli-commands">
+    Explore all command-line options and advanced usage
+  </Card>
+  
+  <Card title="Web Interface" icon="browser" href="/usage/web-interface">
+    Learn how to use the interactive web-based solver
+  </Card>
+  
+  <Card title="Input Format" icon="file" href="/usage/input-format">
+    Detailed specification of the puzzle input format
+  </Card>
+  
+  <Card title="Examples" icon="puzzle-piece" href="/examples/basic-puzzles">
+    Explore more complex puzzle examples
+  </Card>
+</CardGroup>

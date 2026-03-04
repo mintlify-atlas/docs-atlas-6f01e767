@@ -1,0 +1,212 @@
+---
+title: 'Basic Puzzles'
+description: 'Getting started with simple nonogram puzzles'
+---
+
+## Overview
+
+This guide walks through solving basic nonogram puzzles using Kamotake. We'll start with the simplest examples to help you understand the puzzle format and how the SAT-based solver works.
+
+## Puzzle File Format
+
+Each puzzle file follows this structure:
+
+```
+ROWS COLUMNS
+row_constraint_1
+row_constraint_2
+...
+column_constraint_1
+column_constraint_2
+...
+```
+
+Constraints are space-separated numbers indicating consecutive filled cells. A `0` means an empty row/column.
+
+## Example 1: Minimal Puzzle (test2.txt)
+
+Let's start with the smallest possible puzzle - a 5x1 grid:
+
+<CodeGroup>
+```txt test2.txt
+5 1
+3
+0
+1
+1
+1
+0
+```
+</CodeGroup>
+
+### Understanding the Puzzle
+
+- **Grid size**: 5 rows, 1 column
+- **Row constraints**: [3, 0, 1, 1, 1, 0]
+  - Row 1: 3 consecutive filled cells
+  - Row 2: empty
+  - Rows 3-5: 1 filled cell each
+  - Row 6: empty (but we only have 5 rows, so this is ignored)
+- **Column constraint**: Just one column that must have the pattern that satisfies all rows
+
+### Running the Solver
+
+```bash
+cd ~/workspace/source
+./kamotake data/test2.txt
+```
+
+This puzzle solves instantly due to its simplicity. The solver generates CNF clauses representing the constraints and uses a SAT solver to find the solution.
+
+## Example 2: Single Column Puzzle (test3.txt)
+
+A slightly larger single-column puzzle:
+
+<Accordion title="View test3.txt">
+```txt
+15 1
+3 2 6
+1
+1
+1
+0
+1
+1
+0
+1
+1
+1
+1
+1
+1
+0
+0
+```
+</Accordion>
+
+### Understanding the Puzzle
+
+- **Grid size**: 15 rows, 1 column
+- **Row constraint**: `3 2 6` means the column must have:
+  - 3 consecutive filled cells
+  - At least 1 empty cell gap
+  - 2 consecutive filled cells
+  - At least 1 empty cell gap
+  - 6 consecutive filled cells
+- **Column constraints**: Individual 1s and 0s for each of the 15 rows
+
+### Running the Solver
+
+```bash
+./kamotake data/test3.txt
+```
+
+The SAT solver must find a valid arrangement that satisfies both the row constraints (showing the blocks pattern) and column constraints (the individual cell requirements).
+
+## Example 3: Classic Heart Pattern (test0.txt)
+
+Now let's solve a real 2D nonogram - a 25x30 heart pattern:
+
+<Accordion title="View test0.txt (complete file)">
+```txt
+25 30
+4
+5
+5 7
+5 4 3
+4 2 3 2
+4 4 3 2 1
+3 2 2 3 2
+4 2 3 3 1 1
+3 2 4 2 2 2
+4 2 2 1 3 1
+3 3 3 3 2
+3 2 6 3 1 1
+3 1 1 6 2 2 1
+3 4 3 1 4
+3 4 1 3 3 1
+4 3 6 2 1 2
+3 1 1 6 2 2 1
+4 4 4 1 1 2
+3 4 2 2 3
+4 4 5 1 1
+4 2 1 7
+5 4 4
+6 5 3
+7 5
+15
+12
+6
+2
+12
+14
+7
+11
+15
+7 7
+6 5 6
+5 4 4 5
+5 5 4 2 5
+4 3 3 3 4 1
+3 2 2 2 5 4 2
+2 7 4 4 4 2
+1 4 4 2 1 1 3 2
+2 2 4 4 2 4 2
+3 4 5 2 3 2
+1 1 1 2 4 1 2 6
+1 2 2 5 2 1 6
+1 1 1 1 2 5 3 2
+1 3 2 6 3 2
+2 1 1 1 3 3 2
+1 4 2 2 2 3 2
+3 3 2 2 4 2
+1 4 1 3 1 3 1
+2 1 5 2 2
+3 1 2
+3 1 3
+6
+```
+</Accordion>
+
+### Understanding the Puzzle
+
+- **Grid size**: 25 rows × 30 columns
+- **First 25 lines** (after dimensions): Row constraints
+  - Example: Row 1 has `4` → 4 consecutive filled cells
+  - Row 3 has `5 7` → 5 filled, gap, then 7 filled
+- **Next 30 lines**: Column constraints
+  - Example: Column 4 has `7 7` → two groups of 7 filled cells
+
+### Running the Solver
+
+```bash
+./kamotake data/test0.txt
+```
+
+### How the SAT Solver Works
+
+For each cell `(i,j)`, Kamotake creates boolean variables and CNF clauses:
+
+1. **Cell variables**: Each cell can be filled (true) or empty (false)
+2. **Constraint encoding**: For each row/column constraint, the solver generates clauses ensuring:
+   - Blocks have the correct length
+   - Blocks are separated by at least one empty cell
+   - All blocks fit within the grid
+3. **SAT solving**: MiniSat finds an assignment satisfying all clauses
+
+The heart pattern emerges from satisfying all 55 constraints simultaneously.
+
+## Running Multiple Examples
+
+You can test all basic puzzles at once:
+
+```bash
+for file in data/test{0,2,3}.txt; do
+  echo "Solving $file..."
+  ./kamotake "$file"
+done
+```
+
+## Next Steps
+
+Once you're comfortable with these basic examples, move on to [Advanced Puzzles](/examples/advanced-puzzles) to see how Kamotake handles larger and more complex nonograms.

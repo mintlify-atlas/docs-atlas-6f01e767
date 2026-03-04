@@ -1,0 +1,143 @@
+---
+title: 'CLI Commands'
+description: 'Command-line interface reference for Kamotake'
+---
+
+## Overview
+
+Kamotake provides a command-line interface for solving nonogram puzzles. The CLI reads input files in the Kamotake format and outputs the solved puzzle.
+
+## Basic Usage
+
+Once installed, you can run Kamotake from any directory in the same terminal session:
+
+```bash
+kamotake <input_file> [-d] [-c]
+```
+
+### Required Arguments
+
+<ParamField path="input_file" type="string" required>
+  Path to the input file containing the nonogram puzzle in the specified format. See [Input Format](/usage/input-format) for details.
+</ParamField>
+
+### Optional Flags
+
+<ParamField path="-d" type="flag">
+  **Debug mode** - Keep the intermediate DIMACS and SAT solution files generated during solving.
+  
+  By default, Kamotake cleans up these temporary files after solving. Use this flag to preserve them for debugging or analysis.
+  
+  The temporary files are stored in the `.tmp_kamotake` directory.
+</ParamField>
+
+<ParamField path="-c" type="flag">
+  **Compact output** - Display the solution in a compact format.
+  
+  Without this flag, the solution is displayed with spacing for better readability. With `-c`, the output is more condensed.
+</ParamField>
+
+## Examples
+
+### Basic Solving
+
+Solve a nonogram puzzle with default output:
+
+```bash
+kamotake data/test0.txt
+```
+
+This will:
+1. Parse the input file
+2. Solve the puzzle using SAT
+3. Clean up temporary files
+4. Display the solution in standard format
+
+### Compact Output
+
+Solve a puzzle and display the result in compact format:
+
+```bash
+kamotake data/test0.txt -c
+```
+
+<Note>
+  The compact format is useful for larger puzzles or when you need to save screen space.
+</Note>
+
+### Debug Mode
+
+Solve a puzzle while preserving intermediate files:
+
+```bash
+kamotake data/test0.txt -d
+```
+
+This keeps the DIMACS and CNF files in `.tmp_kamotake/` for inspection.
+
+### Combined Flags
+
+You can combine both flags:
+
+```bash
+kamotake data/test0.txt -d -c
+```
+
+This produces compact output while preserving debug files.
+
+## Output Formats
+
+<Tabs>
+  <Tab title="Standard Output">
+    The default output format displays the solved nonogram with spacing between cells for better readability.
+    
+    Filled cells are typically shown with a character (like `■` or `#`), while empty cells are shown with spaces or dots.
+  </Tab>
+  <Tab title="Compact Output">
+    The compact output format (with `-c` flag) displays the solution more densely, removing extra spacing.
+    
+    This format is ideal for:
+    - Large puzzles
+    - Terminal windows with limited width
+    - Programmatic processing
+  </Tab>
+</Tabs>
+
+## Error Handling
+
+<Accordion title="File not found">
+  If the input file doesn't exist:
+  
+  ```
+  kamotake: myfile.txt: No such file
+  ```
+  
+  Make sure the file path is correct and the file exists.
+</Accordion>
+
+<Accordion title="No arguments provided">
+  If you run `kamotake` without any arguments:
+  
+  ```
+  kamotake: No arguments provided
+  Usage: kamotake FILE [-d] [-c]
+  ```
+  
+  You must provide at least an input file.
+</Accordion>
+
+<Accordion title="Invalid input format">
+  If the input file has formatting errors, Kamotake will display an error message describing the problem.
+  
+  See [Input Format](/usage/input-format) for the correct format specification.
+</Accordion>
+
+## Implementation Details
+
+The CLI is implemented in `/kamotake/bin/kamotake`. Key behavior:
+
+- Uses Ruby's `ARGV` to parse command-line arguments (bin/kamotake:18-20)
+- Creates a `Nonogram` object from the input file (bin/kamotake:24)
+- Calls the SAT-based solver (bin/kamotake:33)
+- Conditionally removes temporary files based on the `-d` flag (bin/kamotake:35-38)
+- Outputs either compact or standard format based on the `-c` flag (bin/kamotake:42-46)

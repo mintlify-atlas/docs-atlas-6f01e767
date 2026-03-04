@@ -1,0 +1,273 @@
+---
+title: 'Input Format'
+description: 'Specification for Kamotake puzzle input files'
+---
+
+## Overview
+
+Kamotake uses a plain text format to describe nonogram puzzles. The format specifies the puzzle dimensions followed by row and column constraints.
+
+## File Format Specification
+
+A Kamotake input file contains:
+
+```txt
+<number_of_columns> <number_of_rows>
+<row_1>
+<row_2>
+...
+<row_number_of_rows>
+<column_1>
+<column_2>
+...
+<column_number_of_columns>
+```
+
+### Components
+
+<ParamField path="number_of_columns" type="integer" required>
+  The width of the puzzle (number of columns)
+</ParamField>
+
+<ParamField path="number_of_rows" type="integer" required>
+  The height of the puzzle (number of rows)
+</ParamField>
+
+<ParamField path="row_i" type="space-separated integers">
+  Constraint for row `i`: a list of numbers representing consecutive filled cells in that row.
+  
+  Each number indicates a group of consecutive filled cells, with at least one empty cell between groups.
+  
+  Use `0` for rows with no filled cells.
+</ParamField>
+
+<ParamField path="column_i" type="space-separated integers">
+  Constraint for column `i`: a list of numbers representing consecutive filled cells in that column.
+  
+  Each number indicates a group of consecutive filled cells, with at least one empty cell between groups.
+  
+  Use `0` for columns with no filled cells.
+</ParamField>
+
+## Constraint Notation
+
+Each row and column constraint describes the pattern of filled cells:
+
+- **Numbers**: Each number represents a contiguous group of filled cells
+- **Order**: Groups appear in the order listed
+- **Separation**: There must be at least one empty cell between consecutive groups
+- **Zero**: Use `0` to indicate a row or column with no filled cells
+
+### Examples
+
+<Accordion title="Constraint: 3">
+  Exactly 3 consecutive filled cells
+  
+  ```
+  ■■■
+  ```
+</Accordion>
+
+<Accordion title="Constraint: 2 3">
+  First a group of 2 filled cells, then at least one empty cell, then a group of 3 filled cells
+  
+  ```
+  ■■ ■■■  (at least one space between)
+  ```
+</Accordion>
+
+<Accordion title="Constraint: 1 1 1">
+  Three separate single filled cells, each separated by at least one empty cell
+  
+  ```
+  ■ ■ ■  (at least one space between each)
+  ```
+</Accordion>
+
+<Accordion title="Constraint: 0">
+  No filled cells in this row/column (all empty)
+  
+  ```
+  (all empty)
+  ```
+</Accordion>
+
+## Complete Examples
+
+### Example 1: Simple 5x1 Puzzle
+
+```txt
+5 1
+3
+0
+1
+1
+1
+0
+```
+
+**Explanation**:
+- **Dimensions**: 5 columns, 1 row
+- **Row 1**: 3 consecutive filled cells
+- **Columns**: 
+  - Column 1: Empty
+  - Column 2: 1 filled cell
+  - Column 3: 1 filled cell  
+  - Column 4: 1 filled cell
+  - Column 5: Empty
+
+**Solution**:
+```
+□■■■□
+```
+
+### Example 2: Medium Puzzle (25x30)
+
+From `data/test0.txt`:
+
+```txt
+25 30
+4
+5
+5 7
+5 4 3
+4 2 3 2
+4 4 3 2 1
+3 2 2 3 2
+4 2 3 3 1 1
+3 2 4 2 2 2
+4 2 2 1 3 1
+3 3 3 3 2
+3 2 6 3 1 1
+3 1 1 6 2 2 1
+3 4 3 1 4
+3 4 1 3 3 1
+4 3 6 2 1 2
+3 1 1 6 2 2 1
+4 4 4 1 1 2
+3 4 2 2 3
+4 4 5 1 1
+4 2 1 7
+5 4 4
+6 5 3
+7 5
+15
+12
+6
+2
+12
+14
+7
+11
+15
+7 7
+6 5 6
+5 4 4 5
+5 5 4 2 5
+4 3 3 3 4 1
+3 2 2 2 5 4 2
+2 7 4 4 4 2
+1 4 4 2 1 1 3 2
+2 2 4 4 2 4 2
+3 4 5 2 3 2
+1 1 1 2 4 1 2 6
+1 2 2 5 2 1 6
+1 1 1 1 2 5 3 2
+1 3 2 6 3 2
+2 1 1 1 3 3 2
+1 4 2 2 2 3 2
+3 3 2 2 4 2
+1 4 1 3 1 3 1
+2 1 5 2 2
+3 1 2
+3 1 3
+6
+```
+
+**Explanation**:
+- **Dimensions**: 25 columns × 30 rows
+- **Rows 1-30**: Constraints for each of the 30 rows
+- **Columns 1-25**: Constraints for each of the 25 columns
+
+<Note>
+  This example demonstrates a real puzzle from the included test data. The first line specifies a 25×30 grid, followed by 30 row constraints, then 25 column constraints.
+</Note>
+
+### Example 3: Large Puzzle with Empty Rows/Columns
+
+From `data/test1.txt` (excerpt):
+
+```txt
+53 53
+0
+1
+2 3 2
+2 9 2
+17
+...
+```
+
+**Explanation**:
+- **Dimensions**: 53 columns × 53 rows
+- **Row 1**: `0` - completely empty row
+- **Row 2**: `1` - single filled cell
+- **Row 3**: `2 3 2` - three groups (2 cells, 3 cells, 2 cells)
+- **Row 4**: `2 9 2` - three groups (2 cells, 9 cells, 2 cells)
+- **Row 5**: `17` - single group of 17 consecutive cells
+
+## File Format Rules
+
+<Note>
+  - Each line should contain only the constraint numbers for that row/column
+  - Numbers are separated by single spaces
+  - Empty lines at the end of the file are acceptable
+  - The file must be plain text (UTF-8 encoding recommended)
+  - File extension should be `.txt`
+</Note>
+
+## Creating Your Own Puzzles
+
+To create a custom nonogram puzzle:
+
+1. **Determine dimensions**: Decide on the width (columns) and height (rows)
+2. **Calculate row constraints**: For each row, count the groups of consecutive filled cells
+3. **Calculate column constraints**: For each column, count the groups of consecutive filled cells
+4. **Write the file**: 
+   - First line: `columns rows`
+   - Next `rows` lines: row constraints
+   - Final `columns` lines: column constraints
+
+## Example Files
+
+Kamotake includes several example puzzles in the `data/` directory:
+
+- `test0.txt` - 25×30 puzzle
+- `test1.txt` - 53×53 puzzle
+- `test2.txt` - 5×1 simple puzzle
+- `test3.txt` through `test7.txt` - Various other puzzles
+
+You can use these as references or test the solver with them:
+
+```bash
+kamotake data/test0.txt
+```
+
+## Validation
+
+Kamotake will validate the input file when you run it. Common errors include:
+
+<Accordion title="Missing dimensions">
+  The first line must contain two integers: number of columns and number of rows.
+</Accordion>
+
+<Accordion title="Wrong number of constraints">
+  The file must have exactly `number_of_rows` row constraints followed by exactly `number_of_columns` column constraints.
+</Accordion>
+
+<Accordion title="Invalid constraint values">
+  Constraints must be non-negative integers. The sum of constraints in a row/column (plus minimum spacing) cannot exceed the row/column length.
+</Accordion>
+
+<Accordion title="File encoding issues">
+  Ensure the file is saved as plain text with UTF-8 encoding.
+</Accordion>
