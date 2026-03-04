@@ -1,0 +1,63 @@
+{
+  "projectType": "cli-tool",
+  "projectName": "Kamotake",
+  "projectDescription": "A SAT-based nonogram solver with CLI and web interface.",
+  "theme": "aspen",
+  "primaryColor": "#2563eb",
+  "lightColor": "#3b82f6",
+  "darkColor": "#1e40af",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Get Started",
+        "pages": [
+          "introduction",
+          "installation",
+          "quickstart"
+        ]
+      },
+      {
+        "group": "Usage",
+        "pages": [
+          "usage/cli-commands",
+          "usage/web-interface",
+          "usage/input-format"
+        ]
+      },
+      {
+        "group": "Technical Details",
+        "pages": [
+          "technical/how-it-works",
+          "technical/sat-encoding",
+          "technical/api-reference"
+        ]
+      },
+      {
+        "group": "Examples",
+        "pages": [
+          "examples/basic-puzzles",
+          "examples/advanced-puzzles"
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "SAT-based nonogram puzzle solver using Glucose SAT solver",
+    "Command-line interface with multiple output formats",
+    "Web interface for visual puzzle solving",
+    "CNF/DIMACS translation for SAT solving",
+    "Support for puzzles of arbitrary size"
+  ],
+  "publicApiSurface": [
+    "kamotake <input_file> [-d] [-c]",
+    "Nonogram.new(filename)",
+    "Nonogram#solve",
+    "Nonogram#to_s",
+    "Nonogram#to_s_compact",
+    "Nonogram#n_rows",
+    "Nonogram#n_cols",
+    "Nonogram#row_constraints",
+    "Nonogram#col_constraints",
+    "Nonogram#solution"
+  ]
+}
